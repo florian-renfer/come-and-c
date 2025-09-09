@@ -1,0 +1,15 @@
+default:
+	cc -o build/main main.c gl.c shader.c \
+		-I/home/florian/github.com/florian-renfer/come-and-c/include  \
+		-L/home/florian/github.com/florian-renfer/come-and-c/lib \
+		-lglfw3 \
+		-lGL \
+		-lX11 \
+		-lpthread \
+		-lXrandr \
+		-lXi \
+		-ldl \
+		-lm
+
+run:
+	cd build && ./main
