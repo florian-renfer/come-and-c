@@ -1,5 +1,7 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
+#include <cglm/cglm.h>
+#include <cglm/mat4.h>
 #include <glad/gl.h>
 
 #include <stdio.h>
@@ -135,6 +137,11 @@ int main() {
   }
   stbi_image_free(data);
 
+  mat4 trans;
+  glm_mat4_identity(trans);
+  glm_rotate(trans, 90.0f, (vec3){0.0, 0.0, 1.0});
+  glm_scale(trans, (vec3){0.5, 0.5, 0.5});
+
   while (!glfwWindowShouldClose(window)) {
     processInput(window);
 
@@ -143,6 +150,11 @@ int main() {
 
     glBindTexture(GL_TEXTURE_2D, texture);
     glUseProgram(shaderProgram);
+
+    unsigned int transformLoc =
+        glGetUniformLocation(shaderProgram, "transform");
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, (float *)trans);
+
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
