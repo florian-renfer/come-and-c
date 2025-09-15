@@ -1,5 +1,8 @@
+#include "cglm/types.h"
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
+#include <cglm/cglm.h>
+#include <cglm/mat4.h>
 #include <glad/gl.h>
 
 #include <stdio.h>
@@ -18,6 +21,7 @@ unsigned int shaderProgram;
  * Callback function executed when the window is created or resized.
  */
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+  fprintf(stdout, "Viewport updated to %d x %d\n", width, height);
   glViewport(0, 0, width, height);
 }
 
@@ -143,7 +147,24 @@ int main() {
 
     glBindTexture(GL_TEXTURE_2D, texture);
     glUseProgram(shaderProgram);
+
+    mat4 trans;
+    glm_mat4_identity(trans);
+    glm_scale(trans, (vec3){0.5, 0.5, 0.5});
+    glm_rotate(trans, 90.0f, (vec3){0.0, 0.0, 1.0});
+    unsigned int transformLoc =
+        glGetUniformLocation(shaderProgram, "transform");
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, (float *)trans);
+
     glBindVertexArray(VAO);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+    mat4 transUni;
+    glm_mat4_identity(transUni);
+    glm_translate(transUni, (vec3){-0.5f, 0.5f, 0.0f});
+    unsigned int transformUniLoc =
+        glGetUniformLocation(shaderProgram, "transform");
+    glUniformMatrix4fv(transformUniLoc, 1, GL_FALSE, (float *)transUni);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
     glfwSwapBuffers(window);
