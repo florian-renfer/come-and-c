@@ -7,14 +7,22 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define NUM_SHAPES 5
+#define NUM_BOIDS 5
 
+// TODO: use types vec2 and vec3 provided by cglm
+/**
+ * Structure representing a boid in two-dimensional space.
+ * Keeps track of the position vector (x, y), directional vector (dx, dy), and
+ * color (r, g, b).
+ */
 typedef struct {
   float x, y;
   float dx, dy;
   float r, g, b;
-} Shape;
+} Boid;
 
+// TODO: load vertex and fragment shaders from external files using shader.h and
+// shader.c
 const char *vertex_shader_src =
     "#version 330 core\n"
     "layout (location = 0) in vec2 aPos;\n"
@@ -40,14 +48,17 @@ float vertices[] = {
 
 unsigned int indices[] = {
   0, 1, 2,
-  2, 3, 0
+  0, 3, 2
 };
 // clang-format on
 
+// TODO: move to global state struct
 unsigned int currentRenderingMode = GL_FILL;
-
 unsigned int fps = 0;
 
+/**
+ * Callback function executed when the window is created or resized.
+ */
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   glViewport(0, 0, width, height);
 }
@@ -76,10 +87,16 @@ void processInput(GLFWwindow *window) {
   }
 }
 
+/**
+ * Calculates a random float between min and max.
+ */
 float randf(float min, float max) {
   return min + (float)rand() / ((float)RAND_MAX / (max - min));
 }
 
+/**
+ * Calculates and prints the frames per second (FPS) to the standard output.
+ */
 void calculateFps(int *prev) {
   int curr = glfwGetTime();
   fps++;
@@ -152,8 +169,8 @@ int main() {
   glEnableVertexAttribArray(0);
 
   // Shapes
-  Shape shapes[NUM_SHAPES];
-  for (int i = 0; i < NUM_SHAPES; ++i) {
+  Boid shapes[NUM_BOIDS];
+  for (int i = 0; i < NUM_BOIDS; ++i) {
     shapes[i].x = randf(-0.8f, 0.8f);
     shapes[i].y = randf(-0.8f, 0.8f);
     shapes[i].dx = randf(-0.01f, 0.01f);
@@ -175,8 +192,9 @@ int main() {
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    for (int i = 0; i < NUM_SHAPES; ++i) {
-      // Not really collision detection
+    for (int i = 0; i < NUM_BOIDS; ++i) {
+      // TODO: implement proper collision detection respecting the shape
+      // accurately
       shapes[i].x += shapes[i].dx;
       shapes[i].y += shapes[i].dy;
       if (fabsf(shapes[i].x) > 0.95f)
@@ -184,6 +202,7 @@ int main() {
       if (fabsf(shapes[i].y) > 0.95f)
         shapes[i].dy *= -1;
 
+      // TODO: use a matrix uniform to handle transformations
       glUniform2f(offsetLoc, shapes[i].x, shapes[i].y);
       glUniform3f(colorLoc, shapes[i].r, shapes[i].g, shapes[i].b);
 
@@ -199,6 +218,7 @@ int main() {
   glDeleteBuffers(1, &VBO);
   glDeleteBuffers(1, &EBO);
   glDeleteProgram(shader);
+
   glfwDestroyWindow(window);
   glfwTerminate();
 
