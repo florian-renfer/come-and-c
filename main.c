@@ -1,9 +1,9 @@
-#include "cglm/types.h"
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
+#include <glad/gl.h>
+
 #include <cglm/cglm.h>
 #include <cglm/mat4.h>
-#include <glad/gl.h>
 
 #include <stdio.h>
 #include <stdlib.h>
