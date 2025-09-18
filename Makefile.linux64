@@ -15,7 +15,7 @@ run:
 	cd build && ./main
 
 game:
-	cc game.c gl.c -o build/game \
+	cc game.c shader.c gl.c -o build/game \
 		-I/home/florian/github.com/florian-renfer/come-and-c/include  \
 		-L/home/florian/github.com/florian-renfer/come-and-c/lib \
 		-lglfw3 \

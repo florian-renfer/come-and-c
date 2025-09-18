@@ -2,41 +2,28 @@
 #include <GLFW/glfw3.h>
 #include <glad/gl.h>
 
+#include <cglm/cglm.h>
+#include <cglm/mat4.h>
+
+#include "shader.h"
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
-#define NUM_BOIDS 5
+#define NUM_BOIDS 1
 
-// TODO: use types vec2 and vec3 provided by cglm
 /**
  * Structure representing a boid in two-dimensional space.
  * Keeps track of the position vector (x, y), directional vector (dx, dy), and
  * color (r, g, b).
  */
-typedef struct {
+struct Boid {
   float x, y;
   float dx, dy;
   float r, g, b;
-} Boid;
-
-// TODO: load vertex and fragment shaders from external files using shader.h and
-// shader.c
-const char *vertex_shader_src =
-    "#version 330 core\n"
-    "layout (location = 0) in vec2 aPos;\n"
-    "uniform vec2 offset;\n"
-    "void main() {\n"
-    "   gl_Position = vec4(aPos + offset, 0.0, 1.0);\n"
-    "}\n";
-
-const char *fragment_shader_src = "#version 330 core\n"
-                                  "out vec4 FragColor;\n"
-                                  "uniform vec3 color;\n"
-                                  "void main() {\n"
-                                  "   FragColor = vec4(color, 1.0);\n"
-                                  "}\n";
+};
 
 // clang-format off
 float vertices[] = {
@@ -66,8 +53,8 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 /**
  * Processes input events received by the window.
  * - Pressing the ESC key will close the window.
- *   - Pressing the T key will toggle between wireframe and fill rendering
- * modes.
+ * - Pressing the T key will toggle between wireframe and fill rendering
+ *   modes.
  */
 void processInput(GLFWwindow *window) {
   if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
@@ -141,18 +128,7 @@ int main() {
   int prevtime = glfwGetTime();
 
   // Compile shaders
-  unsigned int vs = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(vs, 1, &vertex_shader_src, NULL);
-  glCompileShader(vs);
-  unsigned int fs = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(fs, 1, &fragment_shader_src, NULL);
-  glCompileShader(fs);
-  unsigned int shader = glCreateProgram();
-  glAttachShader(shader, vs);
-  glAttachShader(shader, fs);
-  glLinkProgram(shader);
-  glDeleteShader(vs);
-  glDeleteShader(fs);
+  GLuint shader = generateShader("shaders/boids.vert", "shaders/boids.frag");
 
   // Setup VAO/VBO/EBO
   unsigned int VAO, VBO, EBO;
@@ -169,20 +145,20 @@ int main() {
   glEnableVertexAttribArray(0);
 
   // Shapes
-  Boid shapes[NUM_BOIDS];
+  struct Boid shapes[NUM_BOIDS];
   for (int i = 0; i < NUM_BOIDS; ++i) {
-    shapes[i].x = randf(-0.8f, 0.8f);
-    shapes[i].y = randf(-0.8f, 0.8f);
-    shapes[i].dx = randf(-0.01f, 0.01f);
-    shapes[i].dy = randf(-0.01f, 0.01f);
-    shapes[i].r = randf(0.2f, 1.0f);
-    shapes[i].g = randf(0.2f, 1.0f);
-    shapes[i].b = randf(0.2f, 1.0f);
+    shapes[i].x = 0.25;
+    shapes[i].y = 0;
+    shapes[i].dx = 0;
+    shapes[i].dy = 0;
+    shapes[i].r = 1;
+    shapes[i].g = 0;
+    shapes[i].b = 1;
   }
 
   glUseProgram(shader);
-  int offsetLoc = glGetUniformLocation(shader, "offset");
-  int colorLoc = glGetUniformLocation(shader, "color");
+  unsigned int colorLoc = glGetUniformLocation(shader, "color");
+  unsigned int transformLoc = glGetUniformLocation(shader, "transform");
 
   while (!glfwWindowShouldClose(window)) {
     processInput(window);
@@ -193,18 +169,13 @@ int main() {
     glClear(GL_COLOR_BUFFER_BIT);
 
     for (int i = 0; i < NUM_BOIDS; ++i) {
-      // TODO: implement proper collision detection respecting the shape
-      // accurately
-      shapes[i].x += shapes[i].dx;
-      shapes[i].y += shapes[i].dy;
-      if (fabsf(shapes[i].x) > 0.95f)
-        shapes[i].dx *= -1;
-      if (fabsf(shapes[i].y) > 0.95f)
-        shapes[i].dy *= -1;
-
-      // TODO: use a matrix uniform to handle transformations
-      glUniform2f(offsetLoc, shapes[i].x, shapes[i].y);
       glUniform3f(colorLoc, shapes[i].r, shapes[i].g, shapes[i].b);
+
+      mat4 trans;
+      glm_mat4_identity(trans);
+      glm_translate(trans, (vec3){-0.5f, 0.5f, 0.0f});
+      glm_rotate(trans, sin(glfwGetTime()), (vec3){0.0, 0.0, 1.0});
+      glUniformMatrix4fv(transformLoc, 1, GL_FALSE, (float *)trans);
 
       glBindVertexArray(VAO);
       glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
